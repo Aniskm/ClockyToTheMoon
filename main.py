@@ -13,6 +13,7 @@ class Window(QWidget):
         self.setWindowTitle("Timer To The Moon")
         self.UI()
         self.show()
+
     def UI(self):
         self.mainDesign()
         self.layouts()
@@ -34,10 +35,9 @@ class Window(QWidget):
         self.logoLabel.setAlignment(Qt.AlignBottom)
         self.clockLabel.setAlignment(Qt.AlignCenter)
 
-
-
-
-
+    def keyPressEvent(self, QKeyEvent):
+        if QKeyEvent.key() == 16777220 and self.lineEdit_for_name.text():
+            self.accountCheck()
 
     def layouts(self):
         self.mainLayout = QVBoxLayout()
@@ -59,11 +59,10 @@ class Window(QWidget):
         self.centerLayout.addWidget((self.lineEdit_for_name))
         self.buttomLayout.addWidget(self.clockLabel)
         self.logoLayout.addWidget(self.logoLabel)
-        self.centerLayout.setContentsMargins(200,20,200,30)
+        self.centerLayout.setContentsMargins(200, 20, 200, 30)
         timer = QTimer(self)
         timer.timeout.connect(self.myClock)
         timer.start(1000)
-
 
     def myClock(self):
         current_time = QTime.currentTime()
@@ -72,8 +71,25 @@ class Window(QWidget):
 
         self.clockLabel.setText(label_time)
 
+    def accountCheck(self):
+        ## check not finisched
+        self.windowForWork()
+
+    def windowForWork(self):
+        self.secondWindow = WindowForWork()
+        self.close()
 
 
+class WindowForWork(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(100, 100, 800, 600)
+        self.setWindowTitle("Project Management")
+        self.UI()
+        self.show()
+
+    def UI(self):
+        pass
 
 
 def main():
