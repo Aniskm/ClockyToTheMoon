@@ -121,7 +121,7 @@ class Window(QWidget):
 class WindowForWork(QWidget):
     def __init__(self):
         super().__init__()
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 950, 700)
         self.setWindowTitle("Project Management")
         self.ui()
         self.show()
@@ -133,9 +133,14 @@ class WindowForWork(QWidget):
         self.firstWindow = Window()
     def mainDesign(self):
         self.setStyleSheet("background-color:rgb(18, 52, 121);color: white; font-family;font-size:12pt")
-        self.listWidget = QListWidget()
-        self.listWidget.setStyleSheet("background-color:rgb(201, 198, 220)")
-        self.listWidget.addItem(" Start time-"+"End time-"+"Pause-"+"Total time-"+"Project name" )
+        self.tableWidget = QTableWidget(32,5)
+        self.tableWidget.setStyleSheet("background-color:rgb(201, 198, 220);color: black")
+        self.tableWidget.setHorizontalHeaderItem(0,QTableWidgetItem("Project name"))
+        self.tableWidget.setHorizontalHeaderItem(1, QTableWidgetItem("Start time"))
+        self.tableWidget.setHorizontalHeaderItem(2, QTableWidgetItem("End Time"))
+        self.tableWidget.setHorizontalHeaderItem(3, QTableWidgetItem("Pause time"))
+        self.tableWidget.setHorizontalHeaderItem(4, QTableWidgetItem("Total Time"))
+        self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.btnNew = QPushButton("New")
         self.btnUpdate = QPushButton("Update")
         self.btnDelete = QPushButton("Delete")
@@ -162,7 +167,7 @@ class WindowForWork(QWidget):
         self.mainLayout.addLayout(self.leftayout,40)
         self.mainLayout.addLayout(self.rightMainLayout,60)
         ###
-        self.rightTopLayout.addWidget(self.listWidget)
+        self.rightTopLayout.addWidget(self.tableWidget)
         self.rightBottomLayout.addWidget(self.btnNew)
         self.rightBottomLayout.addWidget(self.btnUpdate)
         self.rightBottomLayout.addWidget(self.btnDelete)
