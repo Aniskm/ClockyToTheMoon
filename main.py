@@ -23,7 +23,7 @@ class Window(QWidget):
         self.layouts()
 
     def mainDesign(self):
-        self.setStyleSheet("background-color:rgb(18, 52, 121);color: white; font-family")
+        self.setStyleSheet("background-color:rgb(18, 52, 121);color: white; font-family;font-size:12pt")
         self.title_for_main = QLabel("Clocky To The Moon")
         self.title_for_main.setStyleSheet("font-size:30pt")
         self.lineEdit_for_name = QLineEdit()
@@ -129,8 +129,13 @@ class WindowForWork(QWidget):
     def ui(self):
         self.mainDesign()
         self.layouts()
+    def closeEvent(self, event):
+        self.firstWindow = Window()
     def mainDesign(self):
+        self.setStyleSheet("background-color:rgb(18, 52, 121);color: white; font-family;font-size:12pt")
         self.listWidget = QListWidget()
+        self.listWidget.setStyleSheet("background-color:rgb(201, 198, 220)")
+        self.listWidget.addItem(" Start time-"+"End time-"+"Pause-"+"Total time-"+"Project name" )
         self.btnNew = QPushButton("New")
         self.btnUpdate = QPushButton("Update")
         self.btnDelete = QPushButton("Delete")
@@ -143,6 +148,7 @@ class WindowForWork(QWidget):
         self.monthComboBoxe = QComboBox()
         self.months_list()
         self.projectListUpdate()
+        self.btnNew.clicked.connect(self.addTracker)
 
     def layouts(self):
         self.mainLayout = QHBoxLayout()
@@ -173,6 +179,77 @@ class WindowForWork(QWidget):
             self.monthComboBoxe.addItem(month)
     def projectListUpdate(self):
         pass
+
+    def addTracker(self):
+        self.thirdWindow = AddWindow()
+        print (self.thirdWindow.getParam())
+
+
+class AddWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setGeometry(450, 150, 400, 600)
+        self.setFixedSize(400,600)
+        self.setWindowTitle("Add Tracker")
+        self.ui()
+        self.show()
+    def ui(self):
+        self.mainDesign()
+        self.ui()
+
+    def mainDesign(self):
+        self.setStyleSheet("background-color:rgb(18, 52, 121);color: white; font-family;font-size:12pt")
+        self.titelLabel = QLabel("Add Tracker")
+        self.projectNameLabel = QLabel("Project Name")
+        self.titelLabel.setStyleSheet("font-size:15pt")
+        self.titelLabel.setContentsMargins(135, 1, 100, 10)
+        self.projectNameLineE = QLineEdit()
+        self.startTimeLabel = QLabel("Start Time")
+        self.startTimeLineE = QLineEdit()
+        self.startTimeLineE.setPlaceholderText("eg: 08:00")
+        self.endTImeLabel = QLabel("End Time")
+        self.endTImeLineE = QLineEdit()
+        self.endTImeLineE.setPlaceholderText("eg: 16:30")
+        self.pauseLabel = QLabel("Pause Time")
+        self.pauseLineE = QLineEdit()
+        self.pauseLineE.setPlaceholderText("eg: 30")
+        self.btnConfirm = QPushButton("Confirm")
+        self.btnConfirm.clicked.connect(self.confirm)
+
+
+
+    def ui(self):
+        self.mainDesign()
+        self.layouts()
+
+    def layouts(self):
+        self.mainLayout = QVBoxLayout()
+        self.topLayout = QHBoxLayout()
+        self.meduimLayout = QFormLayout()
+        self.bottomLayout = QHBoxLayout()
+        ###
+        self.topLayout.addWidget(self.titelLabel)
+        self.bottomLayout.addWidget(self.btnConfirm)
+        self.meduimLayout.addRow(self.projectNameLabel,self.projectNameLineE)
+        self.meduimLayout.addRow(self.startTimeLabel, self.startTimeLineE)
+        self.meduimLayout.addRow(self.endTImeLabel, self.endTImeLineE)
+        self.meduimLayout.addRow(self.pauseLabel, self.pauseLineE)
+
+        ##
+        self.mainLayout.addLayout(self.topLayout)
+        self.mainLayout.addLayout(self.meduimLayout)
+        self.mainLayout.addLayout(self.bottomLayout)
+        self.setLayout(self.mainLayout)
+
+    def confirm(self):
+        print(self.projectNameLineE.text())
+        self.close()
+
+    def getParam(self):
+
+        print(self.projectNameLineE.text())
+        return self.projectNameLineE.text(), self.startTimeLineE.text(), self.endTImeLineE.text(), self.pauseLineE.text()
+
 def main():
     App = QApplication(sys.argv)
     window = Window()
