@@ -1,11 +1,13 @@
+from calendar import month
 import sys
+from unicodedata import name
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QTimer, QTime, Qt
 from PyQt5.QtGui import QPixmap
 import mysql.connector
-
+import datetime
 
 
 mydb = mysql.connector.connect(
@@ -104,7 +106,7 @@ class Window(QWidget):
 
        
       
-        users_list =[users_list[i][0] for i in range (len (users_list)-1) ]
+        users_list =[users_list[i][0] for i in range (len (users_list)) ]
         if self.uName in users_list:
             print("Willkommen {} ".format(self.uName))
         else:
@@ -152,15 +154,19 @@ class WindowForWork(QWidget):
         self.btnDelete = QPushButton("Delete")
         self.clockimage = QLabel()
         self.clockimage.setPixmap(QPixmap("images/clocki.png"))
-        self.nameLabel = QLabel()
+        self.welcomeLabel = QLabel("Welcome")
+        self.welcomeNameLabel = QLabel("")
         self.projectNameLabel = QLabel("Project")
         self.monthNameLabel = QLabel("Month")
         self.projectComboBoxe= QComboBox()
         self.monthComboBoxe = QComboBox()
         self.months_list()
         self.projectListUpdate()
+        self.welcomeNameLabel.setText(self.uName)
         self.btnNew.clicked.connect(self.addTracker)
         self.btnUpdate.clicked.connect(self.update)
+        self.projectComboBoxe.activated[str].connect(self.projectOnChange)
+        self.monthComboBoxe.activated[str].connect(self.monthOnChange)
 
     def layouts(self):
         self.mainLayout = QHBoxLayout()
@@ -180,7 +186,7 @@ class WindowForWork(QWidget):
         self.rightBottomLayout.addWidget(self.btnDelete)
         ###
         self.leftayout.addRow(" ",self.clockimage)
-        self.leftayout.addRow("",self.nameLabel)
+        self.leftayout.addRow(self.welcomeLabel,self.welcomeNameLabel)
         self.leftayout.addRow(self.projectNameLabel,self.projectComboBoxe)
         self.leftayout.addRow(self.monthNameLabel,self.monthComboBoxe)
         self.setLayout(self.mainLayout)
@@ -194,7 +200,8 @@ class WindowForWork(QWidget):
         query = "SELECT projectName FROM projets"
         mycursor.execute(query)
         projet_list = mycursor.fetchall()   
-        projet_list =[projet_list[i][0] for i in range (len (projet_list)-1) ]
+        projet_list =[projet_list[i][0] for i in range (len (projet_list)) ]
+        projet_list.insert(0,"Alle")
         projet_list=set(projet_list)
         self.projectComboBoxe.clear()
         for projet in projet_list:
@@ -208,10 +215,53 @@ class WindowForWork(QWidget):
         self.projectListUpdate()
         # Noch nicht fertig 
 
-
+    def projectOnChange(self,text):
+        query ="SELECT id FROM persons WHERE persons.name =%s"
+        mycursor.execute(query,(self.uName,))
+        id_list = mycursor.fetchone()
+        self.id_of_person = id_list[0]
+        query=None
+        if text == "Alle":
+            query = "SELECT projectName,startTime,endTime,projets.dateTime,projets.month FROM projets WHERE personID =%s"
+            mycursor.execute(query,(self.id_of_person,))
+            print("my id {}".format(self.id_of_person))
+        else:
+            query = "SELECT projectName,startTime,endTime,projets.dateTime,projets.month FROM projets WHERE projectName =%s and personID =%s"
+            mycursor.execute(query,(text,self.id_of_person))
+        
+        temp_data = mycursor.fetchall()
+        projectNameData =[temp_data[i][0] for i in range (len (temp_data)) ]
+        startTimeData =[temp_data[i][1] for i in range (len (temp_data)) ]
+        endTimeData =[temp_data[i][2] for i in range (len (temp_data)) ]
+        dateTimeData =[temp_data[i][3] for i in range (len (temp_data)) ]
+        monthData =[temp_data[i][4] for i in range (len (temp_data)) ]
+        print(projectNameData)
+        print( monthData)
+    def monthOnChange(self,text):
+        query ="SELECT id FROM persons WHERE persons.name =%s"
+        mycursor.execute(query,(self.uName,))
+        id_list = mycursor.fetchone()
+        self.id_of_person = id_list[0]
+        query=None
+        if text == "Alle":
+            query = "SELECT projectName,startTime,endTime,projets.dateTime,projets.month FROM projets WHERE personID =%s"
+            mycursor.execute(query,(self.id_of_person,))
+        else:
+            query = "SELECT projectName,startTime,endTime,projets.dateTime,projets.month FROM projets WHERE projets.month =%s and personID =%s"
+            mycursor.execute(query,(text,self.id_of_person))
+        
+        temp_data = mycursor.fetchall()
+        projectNameData =[temp_data[i][0] for i in range (len (temp_data)) ]
+        startTimeData =[temp_data[i][1] for i in range (len (temp_data)) ]
+        endTimeData =[temp_data[i][2] for i in range (len (temp_data)) ]
+        dateTimeData =[temp_data[i][3] for i in range (len (temp_data)) ]
+        monthData =[temp_data[i][4] for i in range (len (temp_data)) ]
+        print(projectNameData)
+        print(monthData)
 class AddWindow(QWidget):
     def __init__(self,uName):
         super().__init__()
+        self.id_of_person=None
         self.uName=uName
         self.setGeometry(450, 150, 400, 600)
         self.setFixedSize(400,600)
@@ -238,6 +288,9 @@ class AddWindow(QWidget):
         self.pauseLabel = QLabel("Pause Time")
         self.pauseLineE = QLineEdit()
         self.pauseLineE.setPlaceholderText("eg: 30")
+        self.monthLabel = QLabel("Month")
+        self.monthLineE = QLineEdit()
+        self.monthLineE.setPlaceholderText("to select the actual month, you do not need to specify otherwise e.g. January, February ")
         self.btnConfirm = QPushButton("Confirm")
         self.btnConfirm.clicked.connect(self.confirm)
 
@@ -259,6 +312,7 @@ class AddWindow(QWidget):
         self.meduimLayout.addRow(self.startTimeLabel, self.startTimeLineE)
         self.meduimLayout.addRow(self.endTImeLabel, self.endTImeLineE)
         self.meduimLayout.addRow(self.pauseLabel, self.pauseLineE)
+        self.meduimLayout.addRow(self.monthLabel,self.monthLineE)
 
         ##
         self.mainLayout.addLayout(self.topLayout)
@@ -271,21 +325,31 @@ class AddWindow(QWidget):
         query ="SELECT id FROM persons WHERE persons.name =%s"
         mycursor.execute(query,(self.uName,))
         id_list = mycursor.fetchone()
-        project_Name, start_Time, end_Time, pause =self.getParam()
-        query=("INSERT INTO projets" "(projectName,startTime,endTime,personiD)"
-        "VALUES (%s,%s,%s,%s)")
+        project_Name, start_Time, end_Time, pause,month =self.getParam()
+        query=("INSERT INTO projets" "(projectName,startTime,endTime,personiD,projets.month)"
+        "VALUES (%s,%s,%s,%s,%s)")
         
-        id_of_person = id_list[0]
-        print(id_of_person)
-        data_projet = (project_Name, start_Time, end_Time,id_of_person)
+        self.id_of_person = id_list[0]
+        print(self.id_of_person)
+        data_projet = (project_Name, start_Time, end_Time,self.id_of_person,month)
         mycursor.execute(query,data_projet)
         mydb.commit()
         self.close()
 
     def getParam(self):
-
-        print(self.projectNameLineE.text())
-        return self.projectNameLineE.text(), self.startTimeLineE.text(), self.endTImeLineE.text(), self.pauseLineE.text()
+        dt = datetime.datetime.today()
+        current_month = dt.month
+        months =['January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December']
+        temp_month=None
+        temp_month = self.monthLineE.text()
+        if temp_month.capitalize() in months:
+            temp_month=temp_month.capitalize()
+        else:
+            temp_month=months[dt.month-1]
+        
+       
+            
+        return self.projectNameLineE.text(), self.startTimeLineE.text(), self.endTImeLineE.text(), self.pauseLineE.text(),temp_month
 
 def main():
     App = QApplication(sys.argv)
