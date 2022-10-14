@@ -4,20 +4,30 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import Qt
 from PyQt5.QtCore import QTimer, QTime, Qt
 from PyQt5.QtGui import QPixmap
-import sqlite3
+import mysql.connector
 
-con = sqlite3.connect("clocky.db")
-cur = con.cursor()
+
+
+mydb = mysql.connector.connect(
+host="localhost",
+user="root",
+password="",
+database="anis")
+mycursor = mydb.cursor()
+    
 
 
 class Window(QWidget):
     def __init__(self):
         super().__init__()
+        
         self.setGeometry(100, 100, 800, 600)
         self.setWindowTitle("Timer To The Moon")
         self.UI()
         self.show()
 
+    
+         
     def UI(self):
         self.mainDesign()
         self.layouts()
@@ -82,45 +92,41 @@ class Window(QWidget):
         self.windowForWork()
 
     def windowForWork(self):
-        self.secondWindow = WindowForWork()
+        self.secondWindow = WindowForWork(self.uName)
         self.close()
 
 
     def getUsers(self):
-        query = "SELECT user_name FROM users"
-        users_list = cur.execute(query).fetchall()
+        global mycursor,mydb
+        query = "SELECT name FROM persons"
+        mycursor.execute(query)
+        users_list = mycursor.fetchall()
 
-        print(users_list)
-        if users_list:
-            for user in users_list:
-                print("lol")
-
-                if user[0] == self.uName:
-                    print("test")
-                    print("Hallo {}".format(self.uName))
-                else:
-                    print("you are new here")
-                    self.addUsers()
+       
+      
+        users_list =[users_list[i][0] for i in range (len (users_list)-1) ]
+        if self.uName in users_list:
+            print("Willkommen {} ".format(self.uName))
         else:
             print("call add user")
             self.addUsers()
 
     def addUsers(self):
-        print("called")
-        name = self.uName
-        try:
-            print("try")
-            query = "INSERT INTO users (user_name) VALUES(?)"
-            cur.execute(query, name)
-            con.commit()
-            print("work ")
-        except:
-            print("d ont work")
+        global mycursor,mydb
+        
+        myname = (self.uName,)
+        
+        query = ("INSERT INTO persons (persons.name) VALUES (%s)")
+        mycursor.execute(query,myname)
+            
+        mydb.commit()
+       
 
 
 class WindowForWork(QWidget):
-    def __init__(self):
+    def __init__(self,uName):
         super().__init__()
+        self.uName = uName
         self.setGeometry(100, 100, 950, 700)
         self.setWindowTitle("Project Management")
         self.ui()
@@ -130,7 +136,7 @@ class WindowForWork(QWidget):
         self.mainDesign()
         self.layouts()
     def closeEvent(self, event):
-        self.firstWindow = Window()
+        self.firstWindow = Window(self.uName)
     def mainDesign(self):
         self.setStyleSheet("background-color:rgb(18, 52, 121);color: white; font-family;font-size:12pt")
         self.tableWidget = QTableWidget(32,5)
@@ -154,6 +160,7 @@ class WindowForWork(QWidget):
         self.months_list()
         self.projectListUpdate()
         self.btnNew.clicked.connect(self.addTracker)
+        self.btnUpdate.clicked.connect(self.update)
 
     def layouts(self):
         self.mainLayout = QHBoxLayout()
@@ -179,20 +186,33 @@ class WindowForWork(QWidget):
         self.setLayout(self.mainLayout)
 
     def months_list(self):
-        months =['January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December']
+        months =['Alle','January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December']
         for month in months:
             self.monthComboBoxe.addItem(month)
     def projectListUpdate(self):
-        pass
-
+        global mydb,mycursor
+        query = "SELECT projectName FROM projets"
+        mycursor.execute(query)
+        projet_list = mycursor.fetchall()   
+        projet_list =[projet_list[i][0] for i in range (len (projet_list)-1) ]
+        projet_list=set(projet_list)
+        self.projectComboBoxe.clear()
+        for projet in projet_list:
+            
+            self.projectComboBoxe.addItem(projet)
+            
     def addTracker(self):
-        self.thirdWindow = AddWindow()
-        print (self.thirdWindow.getParam())
+        self.thirdWindow = AddWindow(self.uName)
+    
+    def update(self):
+        self.projectListUpdate()
+        # Noch nicht fertig 
 
 
 class AddWindow(QWidget):
-    def __init__(self):
+    def __init__(self,uName):
         super().__init__()
+        self.uName=uName
         self.setGeometry(450, 150, 400, 600)
         self.setFixedSize(400,600)
         self.setWindowTitle("Add Tracker")
@@ -247,7 +267,19 @@ class AddWindow(QWidget):
         self.setLayout(self.mainLayout)
 
     def confirm(self):
-        print(self.projectNameLineE.text())
+        global mydb,mycursor
+        query ="SELECT id FROM persons WHERE persons.name =%s"
+        mycursor.execute(query,(self.uName,))
+        id_list = mycursor.fetchone()
+        project_Name, start_Time, end_Time, pause =self.getParam()
+        query=("INSERT INTO projets" "(projectName,startTime,endTime,personiD)"
+        "VALUES (%s,%s,%s,%s)")
+        
+        id_of_person = id_list[0]
+        print(id_of_person)
+        data_projet = (project_Name, start_Time, end_Time,id_of_person)
+        mycursor.execute(query,data_projet)
+        mydb.commit()
         self.close()
 
     def getParam(self):
