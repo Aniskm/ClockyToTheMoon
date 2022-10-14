@@ -118,7 +118,7 @@ class Window(QWidget):
         
         myname = (self.uName,)
         
-        query = ("INSERT INTO persons (persons.name) VALUES (%s)")
+        query = ("INSERT INTO persons (persons.name) VALUES (%s)")  
         mycursor.execute(query,myname)
             
         mydb.commit()
@@ -133,7 +133,7 @@ class WindowForWork(QWidget):
         self.setWindowTitle("Project Management")
         self.ui()
         self.show()
-
+        self.id_of_person = None
     def ui(self):
         self.mainDesign()
         self.layouts()
@@ -197,8 +197,14 @@ class WindowForWork(QWidget):
             self.monthComboBoxe.addItem(month)
     def projectListUpdate(self):
         global mydb,mycursor
-        query = "SELECT projectName FROM projets"
-        mycursor.execute(query)
+       
+        query ="SELECT id FROM persons WHERE persons.name =%s"
+        mycursor.execute(query,(self.uName,))
+        id_list = mycursor.fetchone()
+        self.id_of_person = id_list[0]
+        myid = (self.id_of_person,)
+        query = "SELECT projectName FROM projets WHERE personID = (%s) "
+        mycursor.execute(query,myid)
         projet_list = mycursor.fetchall()   
         projet_list =[projet_list[i][0] for i in range (len (projet_list)) ]
         projet_list.insert(0,"Alle")
