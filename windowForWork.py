@@ -19,7 +19,9 @@ class WindowForWork(QWidget):
         self.mydb = mydb
         self.mycursor = mycursor
         self.userId = userId
-        self.setGeometry(100, 100, 950, 700)
+        self.SelectedProject="Alle"
+        self.SelectedMonth="Alle"
+        self.setGeometry(100, 100, 1200, 700)
         self.setWindowTitle("Project Management")
         self.ui()
         self.show()
@@ -32,13 +34,10 @@ class WindowForWork(QWidget):
         print("first")
     def mainDesign(self):
         self.setStyleSheet("background-color:rgb(18, 52, 121);color: white; font-family;font-size:12pt")
-        self.tableWidget = QTableWidget(32,5)
+        self.tableWidget = QTableWidget(32,7)
         self.tableWidget.setStyleSheet("background-color:rgb(201, 198, 220);color: black")
-        self.tableWidget.setHorizontalHeaderItem(0,QTableWidgetItem("Project name"))
-        self.tableWidget.setHorizontalHeaderItem(1, QTableWidgetItem("Start time"))
-        self.tableWidget.setHorizontalHeaderItem(2, QTableWidgetItem("End Time"))
-        self.tableWidget.setHorizontalHeaderItem(3, QTableWidgetItem("Pause time"))
-        self.tableWidget.setHorizontalHeaderItem(4, QTableWidgetItem("Total Time"))
+        self.tableWidget.setHorizontalHeaderLabels(["Project name", "Start time", "End Time", "Pause Time", "Day", "Month","Year"])
+     
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.btnNew = QPushButton("New")
         self.btnUpdate = QPushButton("Update")
@@ -53,6 +52,7 @@ class WindowForWork(QWidget):
         self.monthComboBoxe = QComboBox()
         self.months_list()
         self.projectListUpdate()
+        self.getDataFilter()
         self.welcomeNameLabel.setText(self.uName)
         self.btnNew.clicked.connect(self.addTracker)
         self.btnUpdate.clicked.connect(self.update)
@@ -100,45 +100,51 @@ class WindowForWork(QWidget):
             self.projectComboBoxe.addItem(projet)
             
     def addTracker(self):
-        self.thirdWindow = AddWindow(self.uName,self.mydb,self.mycursor,self.UserId)
+        self.thirdWindow = AddWindow(self.uName,self.mydb,self.mycursor,self.userId)
     
     def update(self):
         self.projectListUpdate()
         # Noch nicht fertig 
 
     def projectOnChange(self,text):
-       
-        query=None
-        if text == "Alle":
-            query = "SELECT projectName,startTime,endTime,projets.dateTime,projets.month FROM projets WHERE personID =%s"
-            self.mycursor.execute(query,(self.userId,))
-            
-        else:
-            query = "SELECT projectName,startTime,endTime,projets.dateTime,projets.month FROM projets WHERE projectName =%s and personID =%s"
-            self.mycursor.execute(query,(text,self.userId))
-        
-        temp_data = self.mycursor.fetchall()
-        projectNameData =[temp_data[i][0] for i in range (len (temp_data)) ]
-        startTimeData =[temp_data[i][1] for i in range (len (temp_data)) ]
-        endTimeData =[temp_data[i][2] for i in range (len (temp_data)) ]
-        dateTimeData =[temp_data[i][3] for i in range (len (temp_data)) ]
-        monthData =[temp_data[i][4] for i in range (len (temp_data)) ]
-        print(projectNameData)
-        print( monthData)
+        self.SelectedProject = text
+        self.getDataFilter()
     def monthOnChange(self,text):
+        self.SelectedMonth = text
+        self.getDataFilter()
+    
+    def getDataFilter(self):
         query=None
-        if text == "Alle":
-            query = "SELECT projectName,startTime,endTime,projets.dateTime,projets.month FROM projets WHERE personID =%s"
-            self.mycursor.execute(query,(self.userId,))
+        myparam = None
+        if self.SelectedProject == "Alle" and self.SelectedMonth =="Alle":
+            query = "SELECT projectName,startTime,endTime,pauseTime,projets.day,projets.month,projets.year FROM projets WHERE personID =%s"
+            myparam=(self.userId,)
+        elif  self.SelectedProject == "Alle" and self.SelectedMonth !="Alle": 
+            query = "SELECT  projectName,startTime,endTime,pauseTime,projets.day,projets.month,projets.year FROM projets WHERE projets.month =%s and personID =%s"
+            myparam=(self.SelectedMonth,self.userId)
+        elif  self.SelectedProject != "Alle" and self.SelectedMonth =="Alle":     
+            query = "SELECT  projectName,startTime,endTime,pauseTime,projets.day,projets.month,projets.year FROM projets WHERE  projectName =%s and personID =%s"
+            myparam=(self.SelectedProject,self.userId)
         else:
-            query = "SELECT projectName,startTime,endTime,projets.dateTime,projets.month FROM projets WHERE projets.month =%s and personID =%s"
-            self.mycursor.execute(query,(text,self.userId))
-        
+            query = "SELECT projectName,startTime,endTime,pauseTime,projets.day,projets.month,projets.year FROM projets WHERE projectName =%s and projets.month =%s and personID =%s"
+            myparam=(self.SelectedProject,self.SelectedMonth,self.userId)
+        self.mycursor.execute(query,myparam)
         temp_data = self.mycursor.fetchall()
         projectNameData =[temp_data[i][0] for i in range (len (temp_data)) ]
         startTimeData =[temp_data[i][1] for i in range (len (temp_data)) ]
         endTimeData =[temp_data[i][2] for i in range (len (temp_data)) ]
-        dateTimeData =[temp_data[i][3] for i in range (len (temp_data)) ]
-        monthData =[temp_data[i][4] for i in range (len (temp_data)) ]
-        print(projectNameData)
-        print(monthData)
+        pauseTimeData =[temp_data[i][3] for i in range (len (temp_data)) ]
+        dayData =[temp_data[i][4] for i in range (len (temp_data)) ]
+        monthData =[temp_data[i][5] for i in range (len (temp_data)) ]
+        yearData =[temp_data[i][6] for i in range (len (temp_data)) ]
+        
+        table_data =[projectNameData,startTimeData,endTimeData,pauseTimeData,dayData,monthData,yearData]
+        self.tableWidget.clear()
+        self.tableWidget.setHorizontalHeaderLabels(["Project name", "Start time", "End Time", "Pause Time", "Day", "Month","Year"])
+        for i in range (len(projectNameData)):
+            for j in range(7):
+                self.tableWidget.setItem(i,j,QTableWidgetItem(str(table_data[j][i])))
+        
+     
+    
+        

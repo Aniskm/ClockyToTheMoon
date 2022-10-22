@@ -1,11 +1,8 @@
 
 from calendar import month
-import sys
 from unicodedata import name
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-from PyQt5.QtCore import Qt
-from PyQt5.QtCore import QTimer, QTime, Qt
 from PyQt5.QtGui import QPixmap
 from mydb import *
 import datetime
@@ -46,6 +43,12 @@ class AddWindow(QWidget):
         self.monthLabel = QLabel("Month")
         self.monthLineE = QLineEdit()
         self.monthLineE.setPlaceholderText("to select the actual month, you do not need to specify otherwise e.g. January, February ")
+        self.dayLabel = QLabel("Day")
+        self.dayLineE= QLineEdit()
+        self.dayLineE.setPlaceholderText("to select the actual day, you do not need to specify otherwise e.g.")
+        self.yearLabel = QLabel("Year")
+        self.yearLineE= QLineEdit()
+        self.yearLineE.setPlaceholderText("to select the actual year, you do not need to specify otherwise e.g.")
         self.btnConfirm = QPushButton("Confirm")
         self.btnConfirm.clicked.connect(self.confirm)
 
@@ -68,7 +71,8 @@ class AddWindow(QWidget):
         self.meduimLayout.addRow(self.endTImeLabel, self.endTImeLineE)
         self.meduimLayout.addRow(self.pauseLabel, self.pauseLineE)
         self.meduimLayout.addRow(self.monthLabel,self.monthLineE)
-
+        self.meduimLayout.addRow(self.dayLabel,self.dayLineE)
+        self.meduimLayout.addRow(self.yearLabel,self.yearLineE)
         ##
         self.mainLayout.addLayout(self.topLayout)
         self.mainLayout.addLayout(self.meduimLayout)
@@ -76,25 +80,23 @@ class AddWindow(QWidget):
         self.setLayout(self.mainLayout)
 
     def confirm(self):
-        project_Name, start_Time, end_Time, pause,month =self.getParam()
-        query=("INSERT INTO projets" "(projectName,startTime,endTime,personiD,projets.month)"
-        "VALUES (%s,%s,%s,%s,%s)")
-        data_projet = (project_Name, start_Time, end_Time,self.userId,month)
+        project_Name, start_Time, end_Time, pause,month,day,year =self.getParam()
+        query=("INSERT INTO projets" "(projectName,startTime,endTime,pauseTime,day,month,year,personID)"
+        "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)")
+        data_projet = (project_Name, start_Time, end_Time,pause,day,month,year,self.userId)
         self.mycursor.execute(query,data_projet)
         self.mydb.commit()
         self.close()
+        print("confirm moth {}".format(month))
 
     def getParam(self):
         dt = datetime.datetime.today()
         
         months =['January', 'February', 'March', 'April', 'May', 'June', 'July','August', 'September', 'October', 'November', 'December']
-        temp_month=None
-        temp_month = self.monthLineE.text()
-        if temp_month.capitalize() in months:
-            temp_month=temp_month.capitalize()
-        else:
-            temp_month=months[dt.month-1]
-        
-       
+        temp_month = self.monthLineE.text().capitalize() if self.monthLineE.text().capitalize() in months else  months[dt.month-1]
+        temp_day = self.dayLineE.text() if self.dayLineE.text() else dt.day
+        temp_year = self.yearLineE.text() if self.yearLineE.text() else dt.year
+        print("temp month {}".format(temp_month))
+      
             
-        return self.projectNameLineE.text(), self.startTimeLineE.text(), self.endTImeLineE.text(), self.pauseLineE.text(),temp_month
+        return self.projectNameLineE.text(), self.startTimeLineE.text(), self.endTImeLineE.text(), self.pauseLineE.text(),temp_month,temp_day,temp_year
